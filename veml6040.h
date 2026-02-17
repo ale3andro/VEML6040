@@ -82,6 +82,7 @@ class VEML6040 {
     uint16_t getWhite(void);
     uint16_t getCCT(float offset = 0.5);  
     float getAmbientLight(void);
+    String getColorName(void);
 };
 
 #endif

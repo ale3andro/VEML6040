@@ -29,6 +29,7 @@ SOFTWARE.
 #include <math.h>
 #endif
 #include "veml6040.h"
+#include <Arduino.h>
 
 
 VEML6040::VEML6040(void) {
@@ -125,4 +126,56 @@ uint16_t VEML6040::getCCT(float offset) {
   cct = 4278.6 * pow(ccti,-1.2455);
   
   return((uint16_t)cct);
+}
+
+String VEML6040::getColorName(void) {
+    
+  uint16_t r, b, g, w;
+  
+  r = read(COMMAND_CODE_RED);
+  g = read(COMMAND_CODE_GREEN);
+  b = read(COMMAND_CODE_BLUE);
+  w = read(COMMAND_CODE_WHITE);
+
+  float rd = (float)r;
+  float gd = (float)g;
+  float bd = (float)b;
+
+  float maxVal = rd;
+  if (gd > maxVal) maxVal = gd;
+  if (bd > maxVal) maxVal = bd;
+
+  float minVal = rd;
+  if (gd < minVal) minVal = gd;
+  if (bd < minVal) minVal = bd;
+
+  float delta = maxVal - minVal;
+
+  // 1. Adjusted Black Threshold (approx 0.5% of max)
+  if (w < 300) return "Black";
+
+  // 2. Check for White/Grey
+  float saturation = (maxVal == 0) ? 0 : (delta / maxVal);
+  
+  if (saturation < 0.15) { 
+      // Adjusted White Threshold (High intensity)
+      return (w > 10000) ? "White" : "Grey";
+  }
+
+  // 3. Hue calculation remains identical (it's ratio-based!)
+  float h = 0;
+  if (delta != 0) {
+      if (maxVal == rd) h = 60 * fmod(((gd - bd) / delta), 6);
+      else if (maxVal == gd) h = 60 * (((bd - rd) / delta) + 2);
+      else if (maxVal == bd) h = 60 * (((rd - gd) / delta) + 4);
+  }
+  if (h < 0) h += 360;
+
+  // 4. Return name based on Hue
+  if (h <= 45 || h >= 335) return "Red";
+  if (h > 45 && h <= 65)  return "Yellow";
+  if (h > 65 && h <= 150)  return "Green";
+  if (h > 150 && h <= 195)  return "Azure";
+  if (h > 195 && h <= 260)  return "Blue";
+  if (h > 260 && h < 330)  return "Magenta";
 }
