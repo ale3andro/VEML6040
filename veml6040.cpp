@@ -179,3 +179,8 @@ String VEML6040::getColorName(void) {
   if (h > 195 && h <= 260)  return "Blue";
   if (h > 260 && h < 330)  return "Magenta";
 }
+
+bool VEML6040::isColor(String color) {
+  String sensorColor = getColorName();
+  return (sensorColor==color) ? true : false;
+}
